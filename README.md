@@ -95,7 +95,4 @@ not figures calculated directly from the data — a limitation worth stating exp
 
 ## Author
 
-**[Your Name]**
-
-Built as part of a data analytics portfolio, extending a healthcare analytics project into
-predictive modeling and class-imbalance handling for finance/credit risk use cases.
+**Akram Chaudhary**
