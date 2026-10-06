@@ -33,7 +33,9 @@ loan delinquency within 2 years, using real lending data and a logistic regressi
 |---|---|
 | Python (pandas) | Data cleaning and exploratory data analysis |
 | scikit-learn | Logistic regression modeling, train-test splitting, feature scaling |
+| SQL (SQLite) | Independent validation of key EDA findings |
 | Jupyter Notebook | Documented, reproducible analysis workflow |
+| Matplotlib | Supporting visualizations, including the model's threshold trade-off curve |
 
 ## Methodology
 
@@ -54,6 +56,37 @@ loan delinquency within 2 years, using real lending data and a logistic regressi
 |---|---|
 | Prior 90+ day late payments | Default rate rises from 4.6% (0 instances) to 60.5% (3+ instances) — the strongest predictor found |
 | Borrower age | Default rate falls steadily from 11.7% (20s) to 2.3% (70+) |
+
+## SQL Analysis
+
+Key EDA findings were independently validated in SQL against a relational database, cross-checking
+the Python-based results:
+
+```sql
+SELECT
+    CASE
+        WHEN NumberOfTimes90DaysLate = 0 THEN '0 times'
+        WHEN NumberOfTimes90DaysLate = 1 THEN '1 time'
+        WHEN NumberOfTimes90DaysLate = 2 THEN '2 times'
+        WHEN NumberOfTimes90DaysLate >= 3 THEN '3+ times'
+    END AS late_90_bucket,
+    COUNT(*) AS total_borrowers,
+    SUM(CASE WHEN SeriousDlqin2yrs = 1 THEN 1 ELSE 0 END) AS default_count,
+    ROUND(SUM(CASE WHEN SeriousDlqin2yrs = 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 1) AS default_pct
+FROM borrowers
+GROUP BY late_90_bucket;
+```
+
+Full queries, including the age-group breakdown, are available in
+[`sql_analysis_credit.sql`](./sql_analysis_credit.sql).
+
+## Visualizations
+
+Three supporting charts (built in `03_visualizations.ipynb`) illustrate the key findings:
+- Default rate by severe late-payment history (step-wise increase: 4.6% → 60.5%)
+- Default rate by age group (steady decline: 11.7% → 2.3%)
+- **Recall/Precision trade-off across decision thresholds** — visually shows why a 0.3 threshold
+  was chosen over the default 0.5, rather than an unsupported guess
 
 ## Model Performance
 
@@ -92,6 +125,22 @@ not figures calculated directly from the data — a limitation worth stating exp
 - This is a single baseline model (logistic regression); more advanced models (e.g. gradient
   boosting) were not tested but would be a natural next step.
 - Data reflects historical lending patterns and may not capture current market conditions.
+
+## Repository Structure
+
+```
+├── Data/
+│   ├── cs-training.csv              # Raw dataset (Kaggle source)
+│   └── credit_risk_cleaned.csv      # Cleaned dataset
+├── notebook/
+│   ├── 01_credit_data_cleaning.ipynb
+│   ├── 02_credit_risk_model.ipynb
+│   └── 03_visualizations.ipynb
+├── sql/
+│   ├── sql_analysis_credit.sql
+│   └── credit_risk.db
+└── README.md
+```
 
 ## Author
 
